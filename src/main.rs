@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::io::{self, BufReader, BufRead};
+use std::io::{self, BufRead, BufReader};
 
 fn main() -> io::Result<()> {
     let file = File::open("input.txt")?;
@@ -16,7 +16,6 @@ fn main() -> io::Result<()> {
 
     left_column.sort();
     right_column.sort();
-    
 
     let mut result_1 = 0;
     let mut result_2 = 0;
