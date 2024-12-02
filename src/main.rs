@@ -38,8 +38,59 @@ fn day_1(content: &Vec<String>) {
     println!("Second part result: {:?}", result_2);
 }
 
+fn is_safe(cur_number: usize, number: usize, flag: &str) -> bool {
+    let difference = cur_number.abs_diff(number);
+    // println!("Compare {:?} and {:?}. Difference, {:?}", cur_number, number, difference);
+    if (1..=3).contains(&difference)
+        && ((cur_number > number && flag == "increase")
+            || (cur_number < number && flag == "decrease"))
+    {
+        return true;
+    }
+    false
+}
+
+fn day_2(content: &Vec<String>) {
+    let mut result = 0;
+    for line in content {
+        let mut safe_count = 0;
+        let mut flag = "";
+        let mut dumpener = 0;
+        let parts: Vec<&str> = line.split_whitespace().collect();
+        let mut number = parts[0].parse::<usize>().unwrap();
+
+        for i in 1..parts.len() {
+            let cur_number = parts[i].parse::<usize>().unwrap();
+            if i == 1 && cur_number > number {
+                flag = "increase";
+            } else if i == 1 && cur_number < number {
+                flag = "decrease";
+            }
+
+            if is_safe(cur_number, number, flag) {
+                safe_count += 1;
+            } else if parts.get(i + 1).is_none() {
+                safe_count += 1;
+            } else if dumpener < 1 && is_safe(parts[i + 1].parse::<usize>().unwrap(), number, flag)
+            {
+                safe_count += 1;
+                dumpener += 1;
+            }
+            number = cur_number;
+        }
+
+        if safe_count == (parts.len() - 1) {
+            result += 1;
+        }
+    }
+
+    println!("Day 2");
+    println!("First/second part result: {result}");
+}
+
 fn main() -> io::Result<()> {
-    let content = read_file("input.txt");
-    day_1(&content);
+    let content = read_file("data/day_2_input.txt");
+    // day_1(&content);
+    day_2(&content);
     Ok(())
 }
