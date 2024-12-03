@@ -1,4 +1,5 @@
-use std::fs::File;
+use regex::Regex;
+use std::fs::{self, File};
 use std::io::{self, BufRead, BufReader};
 
 fn read_file(filename: &str) -> Vec<String> {
@@ -88,9 +89,46 @@ fn day_2(content: &Vec<String>) {
     println!("First/second part result: {result}");
 }
 
+fn day_3(filename: &str) {
+    let content = fs::read_to_string(filename).expect("Unable to read file");
+    let mut result_1 = 0;
+    let mut result_2 = 0;
+
+    let pattern = r"(mul|do(?:n\'t)?)\((?:(\d+),(\d+))?\)";
+    let re = Regex::new(pattern).unwrap();
+    let mut active: bool = true;
+
+    for cap in re.captures_iter(&content) {
+        let instruction = &cap[1];
+
+        if instruction == "mul" {
+            let num_1: usize = cap[2].parse().unwrap();
+            let num_2: usize = cap[3].parse().unwrap();
+            result_1 += num_1 * num_2;
+
+            if active {
+                result_2 += num_1 * num_2;
+            } else {
+                result_2 += 0;
+            }
+        }
+        if instruction == "do" {
+            active = true;
+        }
+        if instruction == "don't" {
+            active = false;
+        }
+    }
+
+    println!("Day 3");
+    println!("Result part 1: {:?}", result_1);
+    println!("Result part 2: {:?}", result_2);
+}
+
 fn main() -> io::Result<()> {
-    let content = read_file("data/day_2_input.txt");
+    // let content = read_file("data/day_2_input.txt");
     // day_1(&content);
-    day_2(&content);
+    // day_2(&content);
+    day_3("data/day_3_input.txt");
     Ok(())
 }
