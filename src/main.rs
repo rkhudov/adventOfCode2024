@@ -125,10 +125,138 @@ fn day_3(filename: &str) {
     println!("Result part 2: {:?}", result_2);
 }
 
+fn grid_rotate(grid: &mut Vec<Vec<char>>) {
+    let n = grid.len();
+    for i in 0..(n / 2) {
+        for j in i..(n - i - 1) {
+            let temp = grid[i][j];
+            grid[i][j] = grid[j][n - 1 - i];
+            grid[j][n - 1 - i] = grid[n - 1 - i][n - 1 - j];
+            grid[n - 1 - i][n - 1 - j] = grid[n - 1 - j][i];
+            grid[n - 1 - j][i] = temp;
+        }
+    }
+}
+
+fn count_horizonal_xmas(grid: &Vec<Vec<char>>) -> i32 {
+    let mut count = 0;
+    for row in 0..grid.len() {
+        for col in 0..grid[row].len() {
+            if grid[row][col] == 'X' {
+                let mut a = 'a';
+                let mut b = 'b';
+                let mut c = 'c';
+                match grid.get(row).and_then(|inner| inner.get(col+1)) {
+                    Some(value) => a = *value,
+                    None => break,
+                }
+                match grid.get(row).and_then(|inner| inner.get(col+2)) {
+                    Some(value) => b = *value,
+                    None => break,
+                }
+                match grid.get(row).and_then(|inner| inner.get(col+3)) {
+                    Some(value) => c = *value,
+                    None => break,
+                }
+                if a == 'M' && b == 'A' && c == 'S' {
+                    count += 1;
+                }
+            }
+        }
+    }
+    count
+}
+
+fn count_diagonal_xmas(grid: &Vec<Vec<char>>) -> i32 {
+    let mut count = 0;
+    for row in 0..grid.len() {
+        for col in 0..grid[row].len() {
+            if grid[row][col] == 'X' {
+                let mut a = 'a';
+                let mut b = 'b';
+                let mut c = 'c';
+                match grid.get(row+1).and_then(|inner| inner.get(col+1)) {
+                    Some(value) => a = *value,
+                    None => break,
+                }
+                match grid.get(row+2).and_then(|inner| inner.get(col+2)) {
+                    Some(value) => b = *value,
+                    None => break,
+                }
+                match grid.get(row+3).and_then(|inner| inner.get(col+3)) {
+                    Some(value) => c = *value,
+                    None => break,
+                }
+                if a == 'M' && b == 'A' && c == 'S' {
+                    count += 1;
+                }
+            }
+        }
+    }
+    count
+}
+
+
+fn count_x_max(grid: &Vec<Vec<char>>) -> i32 {
+    let mut count = 0;
+    for row in 0..grid.len() {
+        for col in 0..grid[row].len() {
+            if grid[row][col] == 'M' {
+                let mut a = 'a';
+                let mut b = 'b';
+                let mut c = 'c';
+                let mut d = 'd';
+                match grid.get(row).and_then(|inner| inner.get(col+2)) {
+                    Some(value) => a = *value,
+                    None => break,
+                }
+                match grid.get(row+1).and_then(|inner| inner.get(col+1)) {
+                    Some(value) => b = *value,
+                    None => break,
+                }
+                match grid.get(row+2).and_then(|inner| inner.get(col)) {
+                    Some(value) => c = *value,
+                    None => break,
+                }
+                match grid.get(row+2).and_then(|inner| inner.get(col+2)) {
+                    Some(value) => d = *value,
+                    None => break,
+                }
+                if a == 'M' && b == 'A' && c == 'S' && d == 'S' {
+                    count += 1;
+                }
+            }
+        }
+    }
+    count
+}
+
+
+fn day_4(filename: &str) {
+    let content = fs::read_to_string(filename).expect("Unable to read file");
+    let mut result_1 = 0;
+    let mut result_2 = 0;
+    let mut grid: Vec<Vec<char>> = Vec::new();
+    for line in content.split("\n") {
+        grid.push(line.chars().collect());
+    }
+
+    for _ in 0..4 {
+        result_1 += count_horizonal_xmas(&grid);
+        result_1 += count_diagonal_xmas(&grid);
+        result_2 += count_x_max(&grid);
+        grid_rotate(&mut grid);
+    }
+    println!("Day 4");
+    println!("Result part 1: {:?}", result_1);
+    println!("Result part 2: {:?}", result_2);
+}
+
 fn main() -> io::Result<()> {
     // let content = read_file("data/day_2_input.txt");
     // day_1(&content);
     // day_2(&content);
-    day_3("data/day_3_input.txt");
+    // day_3("data/day_3_input.txt");
+    day_4("data/day_4_input.txt");
     Ok(())
 }
