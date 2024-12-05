@@ -394,7 +394,7 @@ fn day_5(filename: &str) {
             }
         }
     }
-    println!("Day 4");
+    println!("Day 5");
     println!("Result part 1: {:?}", result_1);
     println!("Result part 2: {:?}", result_2);
 }
