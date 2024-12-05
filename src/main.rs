@@ -1,3 +1,4 @@
+use multimap::MultiMap;
 use regex::Regex;
 use std::fs::{self, File};
 use std::io::{self, BufRead, BufReader};
@@ -146,15 +147,15 @@ fn count_horizonal_xmas(grid: &Vec<Vec<char>>) -> i32 {
                 let mut a = 'a';
                 let mut b = 'b';
                 let mut c = 'c';
-                match grid.get(row).and_then(|inner| inner.get(col+1)) {
+                match grid.get(row).and_then(|inner| inner.get(col + 1)) {
                     Some(value) => a = *value,
                     None => break,
                 }
-                match grid.get(row).and_then(|inner| inner.get(col+2)) {
+                match grid.get(row).and_then(|inner| inner.get(col + 2)) {
                     Some(value) => b = *value,
                     None => break,
                 }
-                match grid.get(row).and_then(|inner| inner.get(col+3)) {
+                match grid.get(row).and_then(|inner| inner.get(col + 3)) {
                     Some(value) => c = *value,
                     None => break,
                 }
@@ -175,15 +176,15 @@ fn count_diagonal_xmas(grid: &Vec<Vec<char>>) -> i32 {
                 let mut a = 'a';
                 let mut b = 'b';
                 let mut c = 'c';
-                match grid.get(row+1).and_then(|inner| inner.get(col+1)) {
+                match grid.get(row + 1).and_then(|inner| inner.get(col + 1)) {
                     Some(value) => a = *value,
                     None => break,
                 }
-                match grid.get(row+2).and_then(|inner| inner.get(col+2)) {
+                match grid.get(row + 2).and_then(|inner| inner.get(col + 2)) {
                     Some(value) => b = *value,
                     None => break,
                 }
-                match grid.get(row+3).and_then(|inner| inner.get(col+3)) {
+                match grid.get(row + 3).and_then(|inner| inner.get(col + 3)) {
                     Some(value) => c = *value,
                     None => break,
                 }
@@ -196,7 +197,6 @@ fn count_diagonal_xmas(grid: &Vec<Vec<char>>) -> i32 {
     count
 }
 
-
 fn count_x_max(grid: &Vec<Vec<char>>) -> i32 {
     let mut count = 0;
     for row in 0..grid.len() {
@@ -206,19 +206,19 @@ fn count_x_max(grid: &Vec<Vec<char>>) -> i32 {
                 let mut b = 'b';
                 let mut c = 'c';
                 let mut d = 'd';
-                match grid.get(row).and_then(|inner| inner.get(col+2)) {
+                match grid.get(row).and_then(|inner| inner.get(col + 2)) {
                     Some(value) => a = *value,
                     None => break,
                 }
-                match grid.get(row+1).and_then(|inner| inner.get(col+1)) {
+                match grid.get(row + 1).and_then(|inner| inner.get(col + 1)) {
                     Some(value) => b = *value,
                     None => break,
                 }
-                match grid.get(row+2).and_then(|inner| inner.get(col)) {
+                match grid.get(row + 2).and_then(|inner| inner.get(col)) {
                     Some(value) => c = *value,
                     None => break,
                 }
-                match grid.get(row+2).and_then(|inner| inner.get(col+2)) {
+                match grid.get(row + 2).and_then(|inner| inner.get(col + 2)) {
                     Some(value) => d = *value,
                     None => break,
                 }
@@ -230,7 +230,6 @@ fn count_x_max(grid: &Vec<Vec<char>>) -> i32 {
     }
     count
 }
-
 
 fn day_4(filename: &str) {
     let content = fs::read_to_string(filename).expect("Unable to read file");
@@ -252,11 +251,160 @@ fn day_4(filename: &str) {
     println!("Result part 2: {:?}", result_2);
 }
 
+fn bubble_sort_with_rules(mut vec: Vec<i32>, multi_map: &MultiMap<i32, i32>) -> Vec<i32> {
+    let mut swapped = true;
+
+    while swapped {
+        swapped = false;
+
+        for i in 0..vec.len() - 1 {
+            let current = vec[i];
+            let next = vec[i + 1];
+
+            // Check if `next` can follow `current` based on the multi_map
+            if let Some(followers) = multi_map.get_vec(&current) {
+                if !followers.contains(&next) {
+                    // If `next` cannot follow `current`, swap them
+                    vec.swap(i, i + 1);
+                    swapped = true;
+                }
+            } else {
+                // If current element has no followers, no restriction, swap if needed
+                if current > next {
+                    vec.swap(i, i + 1);
+                    swapped = true;
+                }
+            }
+        }
+    }
+
+    vec
+}
+
+fn day_5(filename: &str) {
+    let content = fs::read_to_string(filename).expect("Unable to read file");
+    let mut result_1 = 0;
+    let mut result_2 = 0;
+    let mut left_to_right_rules = MultiMap::new();
+    let mut right_to_left_rules = MultiMap::new();
+    let mut not_valid_instructions: Vec<Vec<i32>> = Vec::new();
+    let mut switch = false;
+    for line in content.split("\n") {
+        if line == "" {
+            switch = true;
+            continue;
+        }
+        if !switch {
+            let parts: Vec<&str> = line.split("|").collect();
+            let left_instruction = parts[0].parse::<i32>().unwrap();
+            let right_instruction = parts[1].parse::<i32>().unwrap();
+            left_to_right_rules.insert(left_instruction, right_instruction);
+            right_to_left_rules.insert(right_instruction, left_instruction);
+        } else {
+            let mut instructions: Vec<i32> = Vec::new();
+            for instruction in line.split(",") {
+                instructions.push(instruction.parse::<i32>().unwrap());
+            }
+            let mut take = true;
+            println!("Instructions {:?}", instructions);
+            for i in 0..instructions.len() {
+                let instruction = instructions[i];
+                if i == 0 {
+                    let allowed_instructions = left_to_right_rules.get_vec(&instruction).unwrap();
+                    let rest_instructions = &instructions[1..];
+                    let first = rest_instructions
+                        .iter()
+                        .all(|x| allowed_instructions.contains(x));
+
+                    if !first {
+                        println!("Not valid first {:?}", instruction);
+                        take = false;
+                        not_valid_instructions.push(instructions.clone());
+                        let new_instructions =
+                            bubble_sort_with_rules(instructions.clone(), &left_to_right_rules);
+                        println!("New instructions {:?}", new_instructions);
+                        result_2 += new_instructions[new_instructions.len() / 2];
+                        break;
+                    }
+                } else if i == instructions.len() - 1 {
+                    let allowed_instructions = right_to_left_rules.get_vec(&instruction).unwrap();
+                    let rest_instructions = &instructions[..&instructions.len() - 1];
+                    let last = rest_instructions
+                        .iter()
+                        .all(|x| allowed_instructions.contains(x));
+
+                    if !last {
+                        println!("Not valid last {:?}", instruction);
+                        take = false;
+                        not_valid_instructions.push(instructions.clone());
+                        let new_instructions =
+                            bubble_sort_with_rules(instructions.clone(), &right_to_left_rules);
+                        println!("New instructions {:?}", new_instructions);
+                        result_2 += new_instructions[new_instructions.len() / 2];
+                        break;
+                    }
+                } else {
+                    // let allowed_instructions = left_to_right_rules.get_vec(&instruction).unwrap();
+                    let right_allowed_instructions = left_to_right_rules.get_vec(&instruction);
+                    let allowed_instructions;
+                    match right_allowed_instructions {
+                        Some(val) => {
+                            allowed_instructions = val;
+                        }
+                        None => {
+                            println!("Not valid");
+                            let mut new_instructions =
+                                bubble_sort_with_rules(instructions.clone(), &left_to_right_rules);
+                            println!("New instructions {:?}", new_instructions);
+                            new_instructions.reverse();
+                            let mut new_new_instructions = bubble_sort_with_rules(
+                                new_instructions.clone(),
+                                &right_to_left_rules,
+                            );
+                            new_new_instructions.reverse();
+                            println!("New new instructions {:?}", new_new_instructions);
+                            result_2 += new_new_instructions[new_new_instructions.len() / 2];
+                            take = false;
+                            break;
+                        }
+                    }
+                    let right_rest_instructions = &instructions[i + 1..];
+                    let check = right_rest_instructions
+                        .iter()
+                        .all(|x| allowed_instructions.contains(x));
+
+                    if !check {
+                        println!("Instructions {:?}", instructions);
+                        println!("Not valid middle {:?}", instruction);
+                        take = false;
+                        not_valid_instructions.push(instructions.clone());
+                        let new_instructions =
+                            bubble_sort_with_rules(instructions.clone(), &left_to_right_rules);
+                        println!("New instructions {:?}", new_instructions);
+                        result_2 += new_instructions[new_instructions.len() / 2];
+                        break;
+                    }
+                }
+            }
+            if take {
+                println!("Valid");
+                result_1 += instructions[instructions.len() / 2];
+            } else {
+                continue;
+            }
+        }
+    }
+    println!("Day 4");
+    println!("Result part 1: {:?}", result_1);
+    println!("Result part 2: {:?}", result_2);
+}
+
 fn main() -> io::Result<()> {
     // let content = read_file("data/day_2_input.txt");
     // day_1(&content);
     // day_2(&content);
     // day_3("data/day_3_input.txt");
-    day_4("data/day_4_input.txt");
+    // day_4("data/day_4_input.txt");
+    day_5("data/day_5_input.txt");
     Ok(())
 }
