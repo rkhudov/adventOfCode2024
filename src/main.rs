@@ -2,6 +2,7 @@ use multimap::MultiMap;
 use regex::Regex;
 use std::fs::{self, File};
 use std::io::{self, BufRead, BufReader};
+use std::collections::HashSet;
 
 fn read_file(filename: &str) -> Vec<String> {
     let file = File::open(filename).unwrap();
@@ -399,12 +400,179 @@ fn day_5(filename: &str) {
     println!("Result part 2: {:?}", result_2);
 }
 
+fn get_next_position(grid: &Vec<Vec<char>>, row_index: usize, col_index: usize) -> char {
+    let next_position = '?';
+    if let Some(row) = grid.get(row_index) {
+        if let Some(value) = row.get(col_index) {
+            return *value;
+        } else {
+            return next_position;
+        }
+    }
+    next_position
+}
+
+fn day_6(filename: &str) {
+    let content = fs::read_to_string(filename).expect("Unable to read file");
+    let mut result_1 = 0;
+    let mut result_2 = 0;
+    let mut guard_row_index = 0;
+    let mut guard_column_index = 0;
+    let mut grid: Vec<Vec<char>> = Vec::new();
+    for (row, line) in content.split("\n").enumerate() {
+        let mut grid_row: Vec<char> = Vec::new();
+
+        for (column, ch) in line.char_indices() {
+            if ch == '^' {
+                grid_row.push('.');
+                guard_row_index = row;
+                guard_column_index = column;
+            } else {
+                grid_row.push(ch);
+            }
+        }
+        grid.push(grid_row);
+    }
+    println!("{:?}", grid);
+    let initial_guard_row_index = guard_row_index;
+    let initial_guard_column_index = guard_column_index;
+    let original_grid = grid.clone();
+
+    for i in 0..grid.len() {
+        for j in 0..grid[i].len() {
+            if grid[i][j] == '^' || grid[i][j] == '#' {
+                continue;
+            }
+            grid[i][j] = '#';
+            println!("Placing # element in position {:?} {:?}", i, j);
+            // println!("grid looks like: {:?}", grid);
+
+            let mut flag = true;
+            let mut direction = '^';
+            let mut recorded_positions: HashSet<Vec<usize>> = HashSet::new();
+
+            guard_row_index = initial_guard_row_index;
+            guard_column_index = initial_guard_column_index;
+            let mut hack = 0;
+
+            while flag {
+                if hack > 10000 {
+                    println!("Loop found!");
+                    result_2 += 1;
+                    flag = false;
+                }
+                // println!("Guard in position {:?} {:?}", guard_row_index, guard_column_index);
+                // println!("Direction {direction}");
+                match direction {
+                    '^' => {
+                        if guard_row_index == 0 {
+                            flag = false;
+                            break;
+                        }
+                        guard_row_index -= 1;
+                        let position = get_next_position(&grid, guard_row_index, guard_column_index);
+                        match position {
+                            '?' => flag = false,
+                            '.' => {
+                                let initial_len = recorded_positions.len();
+                                recorded_positions.insert(vec![guard_row_index, guard_column_index]);
+                                let modified_len = recorded_positions.len();
+                                if initial_len == modified_len {
+                                    hack += 1;
+                                }
+                            },
+                            '#' => {
+                                guard_row_index += 1;
+                                direction = '>';
+                            }
+                            _ => println!("Not the case"),
+                        }
+                    },
+                    '>' => {
+                        guard_column_index += 1;
+                        let position = get_next_position(&grid, guard_row_index, guard_column_index);
+                        match position {
+                            '?' => flag = false,
+                            '.' => {
+                                let initial_len = recorded_positions.len();
+                                recorded_positions.insert(vec![guard_row_index, guard_column_index]);
+                                let modified_len = recorded_positions.len();
+                                if initial_len == modified_len {
+                                    hack += 1;
+                                }
+                            },
+                            '#' => {
+                                guard_column_index -= 1;
+                                direction = 'v';
+                            }
+                            _ => println!("Not the case"),
+                        }
+                    },
+                    'v' => {
+                        guard_row_index += 1;
+                        let position = get_next_position(&grid, guard_row_index, guard_column_index);
+                        match position {
+                            '?' => flag = false,
+                            '.' => {
+                                let initial_len = recorded_positions.len();
+                                recorded_positions.insert(vec![guard_row_index, guard_column_index]);
+                                let modified_len = recorded_positions.len();
+                                if initial_len == modified_len {
+                                    hack += 1;
+                                }
+                            },
+                            '#' => {
+                                guard_row_index -= 1;
+                                direction = '<';
+                            }
+                            _ => println!("Not the case"),
+                        }
+                    },
+                    '<' => {
+                        if guard_column_index == 0 {
+                            flag = false;
+                            break;
+                        }
+                        guard_column_index -= 1;
+                        let position = get_next_position(&grid, guard_row_index, guard_column_index);
+                        match position {
+                            '?' => flag = false,
+                            '.' => {
+                                let initial_len = recorded_positions.len();
+                                recorded_positions.insert(vec![guard_row_index, guard_column_index]);
+                                let modified_len = recorded_positions.len();
+                                if initial_len == modified_len {
+                                    hack += 1;
+                                }
+                            },
+                            '#' => {
+                                guard_column_index += 1;
+                                direction = '^';
+                            }
+                            _ => println!("Not the case"),
+                        }
+                    },
+                    _ => println!("Not the case"),
+                }
+            }
+        
+            grid = original_grid.clone();
+
+            result_1 = recorded_positions.len();
+            println!("Result part 1: {:?}", result_1);
+        }
+    }
+    println!("Day 6");
+    println!("Result part 2: {:?}", result_2);
+}
+
 fn main() -> io::Result<()> {
     // let content = read_file("data/day_2_input.txt");
     // day_1(&content);
     // day_2(&content);
     // day_3("data/day_3_input.txt");
     // day_4("data/day_4_input.txt");
-    day_5("data/day_5_input.txt");
+    // day_5("data/day_5_input.txt");
+    day_6("data/day_6_input.txt");
     Ok(())
 }
