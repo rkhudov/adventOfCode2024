@@ -1,8 +1,8 @@
 use multimap::MultiMap;
 use regex::Regex;
+use std::collections::HashSet;
 use std::fs::{self, File};
 use std::io::{self, BufRead, BufReader};
-use std::collections::HashSet;
 
 fn read_file(filename: &str) -> Vec<String> {
     let file = File::open(filename).unwrap();
@@ -470,92 +470,100 @@ fn day_6(filename: &str) {
                             break;
                         }
                         guard_row_index -= 1;
-                        let position = get_next_position(&grid, guard_row_index, guard_column_index);
+                        let position =
+                            get_next_position(&grid, guard_row_index, guard_column_index);
                         match position {
                             '?' => flag = false,
                             '.' => {
                                 let initial_len = recorded_positions.len();
-                                recorded_positions.insert(vec![guard_row_index, guard_column_index]);
+                                recorded_positions
+                                    .insert(vec![guard_row_index, guard_column_index]);
                                 let modified_len = recorded_positions.len();
                                 if initial_len == modified_len {
                                     hack += 1;
                                 }
-                            },
+                            }
                             '#' => {
                                 guard_row_index += 1;
                                 direction = '>';
                             }
                             _ => println!("Not the case"),
                         }
-                    },
+                    }
                     '>' => {
                         guard_column_index += 1;
-                        let position = get_next_position(&grid, guard_row_index, guard_column_index);
+                        let position =
+                            get_next_position(&grid, guard_row_index, guard_column_index);
                         match position {
                             '?' => flag = false,
                             '.' => {
                                 let initial_len = recorded_positions.len();
-                                recorded_positions.insert(vec![guard_row_index, guard_column_index]);
+                                recorded_positions
+                                    .insert(vec![guard_row_index, guard_column_index]);
                                 let modified_len = recorded_positions.len();
                                 if initial_len == modified_len {
                                     hack += 1;
                                 }
-                            },
+                            }
                             '#' => {
                                 guard_column_index -= 1;
                                 direction = 'v';
                             }
                             _ => println!("Not the case"),
                         }
-                    },
+                    }
                     'v' => {
                         guard_row_index += 1;
-                        let position = get_next_position(&grid, guard_row_index, guard_column_index);
+                        let position =
+                            get_next_position(&grid, guard_row_index, guard_column_index);
                         match position {
                             '?' => flag = false,
                             '.' => {
                                 let initial_len = recorded_positions.len();
-                                recorded_positions.insert(vec![guard_row_index, guard_column_index]);
+                                recorded_positions
+                                    .insert(vec![guard_row_index, guard_column_index]);
                                 let modified_len = recorded_positions.len();
                                 if initial_len == modified_len {
                                     hack += 1;
                                 }
-                            },
+                            }
                             '#' => {
                                 guard_row_index -= 1;
                                 direction = '<';
                             }
                             _ => println!("Not the case"),
                         }
-                    },
+                    }
                     '<' => {
                         if guard_column_index == 0 {
                             flag = false;
                             break;
                         }
                         guard_column_index -= 1;
-                        let position = get_next_position(&grid, guard_row_index, guard_column_index);
+                        let position =
+                            get_next_position(&grid, guard_row_index, guard_column_index);
                         match position {
                             '?' => flag = false,
                             '.' => {
                                 let initial_len = recorded_positions.len();
-                                recorded_positions.insert(vec![guard_row_index, guard_column_index]);
+                                recorded_positions
+                                    .insert(vec![guard_row_index, guard_column_index]);
                                 let modified_len = recorded_positions.len();
                                 if initial_len == modified_len {
                                     hack += 1;
                                 }
-                            },
+                            }
                             '#' => {
                                 guard_column_index += 1;
                                 direction = '^';
                             }
                             _ => println!("Not the case"),
                         }
-                    },
+                    }
                     _ => println!("Not the case"),
                 }
             }
-        
+
             grid = original_grid.clone();
 
             result_1 = recorded_positions.len();
@@ -566,6 +574,70 @@ fn day_6(filename: &str) {
     println!("Result part 2: {:?}", result_2);
 }
 
+fn can_combine(numbers: &Vec<usize>, target: usize, cur_value: usize) -> bool {
+    if cur_value == target {
+        return true;
+    } else if cur_value > target {
+        return false;
+    }
+
+    for (i, &number) in numbers.iter().enumerate() {
+        let mut remaining = numbers.to_vec();
+        remaining.remove(i);
+
+        if cur_value != 0 && can_combine(&remaining, target, cur_value * number) {
+            return true;
+        }
+
+        if can_combine(&remaining, target, cur_value + number) {
+            return true;
+        }
+    }
+    false
+}
+
+fn possible_targets(targets: Vec<i64>, number: i64) -> Vec<i64> {
+    let mut new_targets: Vec<i64> = Vec::new();
+    if targets.is_empty() {
+        new_targets.push(number);
+        return new_targets;
+    }
+
+    for target in targets {
+        new_targets.push(target + number);
+        new_targets.push(target * number);
+        new_targets.push((target.to_string() + &number.to_string()).parse().unwrap());
+    }
+
+    new_targets
+}
+
+fn day_7(filename: &str) {
+    let content = fs::read_to_string(filename).expect("Unable to read file");
+    let mut result = 0;
+
+    for line in content.split('\n') {
+        // println!("Line {line}");
+        let parts: Vec<&str> = line.split(':').collect();
+        let target = parts[0].parse::<i64>().unwrap();
+        let mut numbers: Vec<i64> = Vec::new();
+        for number in parts[1].split_whitespace() {
+            numbers.push(number.parse::<i64>().unwrap());
+        }
+
+        // println!("Target: {target}; numbers {:?}", numbers);
+        let possible_targets = numbers
+            .iter()
+            .fold(Vec::new(), |acc, &num| possible_targets(acc, num));
+        if possible_targets.contains(&target) {
+            result += target;
+        }
+    }
+
+    println!("Day 7");
+    println!("Result part 1/2: {result}");
+}
+
 fn main() -> io::Result<()> {
     // let content = read_file("data/day_2_input.txt");
     // day_1(&content);
@@ -573,6 +645,7 @@ fn main() -> io::Result<()> {
     // day_3("data/day_3_input.txt");
     // day_4("data/day_4_input.txt");
     // day_5("data/day_5_input.txt");
-    day_6("data/day_6_input.txt");
+    // day_6("data/day_6_input.txt");
+    day_7("data/day_7_input.txt");
     Ok(())
 }
