@@ -1,6 +1,6 @@
 use multimap::MultiMap;
 use regex::Regex;
-use std::collections::HashSet;
+use std::collections::{HashSet, HashMap};
 use std::fs::{self, File};
 use std::io::{self, BufRead, BufReader};
 
@@ -638,6 +638,54 @@ fn day_7(filename: &str) {
     println!("Result part 1/2: {result}");
 }
 
+fn day_8(filename: &str) {
+    let content = fs::read_to_string(filename).expect("Unable to read file");
+    let mut result = 0;
+    let mut grid: Vec<Vec<char>> = Vec::new();
+    let mut antennas_to_coordinates_map: HashMap<char, Vec<(i32, i32)>> = HashMap::new();
+
+    for (row_index , line) in content.lines().enumerate() {
+        let row_index_i = row_index as i32;
+        let mut grid_row = Vec::new();
+        for (col_index, ch) in line.chars().enumerate() {
+            let col_index_j = col_index as i32;
+            grid_row.push(ch);
+            if ch != '.' {
+                antennas_to_coordinates_map.entry(ch).or_insert(vec![]).push((row_index_i, col_index_j));
+            }
+        }
+        grid.push(grid_row);
+    }
+    let rows = grid.len() as i32;
+    let cols = grid[0].len() as i32;
+
+    let mut antinodes_coordinates: HashSet<(i32, i32)> = HashSet::new();
+    for (_, antenna_coordinates) in antennas_to_coordinates_map {
+        for i in 0..antenna_coordinates.len() {
+            for j in (i+1)..antenna_coordinates.len() {
+                let row_diff = antenna_coordinates[j].0 - antenna_coordinates[i].0;
+                let col_diff = antenna_coordinates[j].1 - antenna_coordinates[i].1;
+
+                for (x, y) in [
+                    (antenna_coordinates[i], (-row_diff, -col_diff)),
+                    (antenna_coordinates[j], (row_diff, col_diff)),
+                ] {
+                    for a in 0..rows { // set a to 1, to get result for part 1
+                        let antinode_coordinates = (x.0 + y.0 * a, x.1 + y.1 * a);
+                        if antinode_coordinates.0 >= 0 && antinode_coordinates.0 < rows && antinode_coordinates.1 >= 0 && antinode_coordinates.1 < cols {
+                            antinodes_coordinates.insert(antinode_coordinates);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    result = antinodes_coordinates.len();
+
+    println!("Day 8");
+    println!("Result part 1/2: {result}");
+}
+
 fn main() -> io::Result<()> {
     // let content = read_file("data/day_2_input.txt");
     // day_1(&content);
@@ -646,6 +694,7 @@ fn main() -> io::Result<()> {
     // day_4("data/day_4_input.txt");
     // day_5("data/day_5_input.txt");
     // day_6("data/day_6_input.txt");
-    day_7("data/day_7_input.txt");
+    // day_7("data/day_7_input.txt");
+    day_8("data/day_8_input.txt");
     Ok(())
 }
