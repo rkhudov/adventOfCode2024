@@ -686,6 +686,58 @@ fn day_8(filename: &str) {
     println!("Result part 1/2: {result}");
 }
 
+fn day_9(filename: &str) {
+    let content = fs::read_to_string(filename).expect("Unable to read file");
+    let mut result_1 = 0;
+    let mut result_2 = 0;
+    let mut disk_map: Vec<String> = Vec::new();
+    let mut file_id = 0;
+    let mut file_blocks_index: Vec<usize> = Vec::new();
+    let mut file_blocks: Vec<u32> = Vec::new();
+
+    for (index, ch) in content.chars().enumerate() {
+        let number = ch.to_digit(10).unwrap();
+        if index % 2 == 0 {
+            for _ in 0..number {
+                file_blocks_index.push(disk_map.len());
+                disk_map.push(file_id.to_string());
+                file_blocks.push(file_id);
+            }
+            file_id += 1;
+        } else {
+            for _ in 0..number {
+                disk_map.push('.'.to_string());
+            }
+        }
+    }
+    file_blocks_index.reverse();
+    file_blocks.reverse();
+    let mut disk_map_clone = disk_map.clone();
+    let mut index = 0;
+
+    for (i, element) in disk_map.into_iter().enumerate() {
+        if element == "." {
+            if i < file_blocks_index[index] {
+                disk_map_clone.swap(i, file_blocks_index[index]);
+            } else {
+                break;
+            }
+            index += 1;
+        }
+    }
+
+    for (i, element) in disk_map_clone.into_iter().enumerate() {
+        if element != "." {
+            let number = element.parse::<usize>().unwrap();
+            result_1 += number * i;
+        }
+    }
+
+    println!("Day 9");
+    println!("Result part 1: {result_1}");
+    println!("Result part 2: {result_2}");
+}
+
 fn main() -> io::Result<()> {
     // let content = read_file("data/day_2_input.txt");
     // day_1(&content);
@@ -695,6 +747,7 @@ fn main() -> io::Result<()> {
     // day_5("data/day_5_input.txt");
     // day_6("data/day_6_input.txt");
     // day_7("data/day_7_input.txt");
-    day_8("data/day_8_input.txt");
+    // day_8("data/day_8_input.txt");
+    day_9("data/day_9_input.txt");
     Ok(())
 }
