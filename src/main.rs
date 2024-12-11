@@ -1,6 +1,6 @@
 use multimap::MultiMap;
 use regex::Regex;
-use std::collections::{HashSet, HashMap};
+use std::collections::{HashMap, HashSet};
 use std::fs::{self, File};
 use std::io::{self, BufRead, BufReader};
 
@@ -644,14 +644,17 @@ fn day_8(filename: &str) {
     let mut grid: Vec<Vec<char>> = Vec::new();
     let mut antennas_to_coordinates_map: HashMap<char, Vec<(i32, i32)>> = HashMap::new();
 
-    for (row_index , line) in content.lines().enumerate() {
+    for (row_index, line) in content.lines().enumerate() {
         let row_index_i = row_index as i32;
         let mut grid_row = Vec::new();
         for (col_index, ch) in line.chars().enumerate() {
             let col_index_j = col_index as i32;
             grid_row.push(ch);
             if ch != '.' {
-                antennas_to_coordinates_map.entry(ch).or_insert(vec![]).push((row_index_i, col_index_j));
+                antennas_to_coordinates_map
+                    .entry(ch)
+                    .or_insert(vec![])
+                    .push((row_index_i, col_index_j));
             }
         }
         grid.push(grid_row);
@@ -662,7 +665,7 @@ fn day_8(filename: &str) {
     let mut antinodes_coordinates: HashSet<(i32, i32)> = HashSet::new();
     for (_, antenna_coordinates) in antennas_to_coordinates_map {
         for i in 0..antenna_coordinates.len() {
-            for j in (i+1)..antenna_coordinates.len() {
+            for j in (i + 1)..antenna_coordinates.len() {
                 let row_diff = antenna_coordinates[j].0 - antenna_coordinates[i].0;
                 let col_diff = antenna_coordinates[j].1 - antenna_coordinates[i].1;
 
@@ -670,9 +673,14 @@ fn day_8(filename: &str) {
                     (antenna_coordinates[i], (-row_diff, -col_diff)),
                     (antenna_coordinates[j], (row_diff, col_diff)),
                 ] {
-                    for a in 0..rows { // set a to 1, to get result for part 1
+                    for a in 0..rows {
+                        // set a to 1, to get result for part 1
                         let antinode_coordinates = (x.0 + y.0 * a, x.1 + y.1 * a);
-                        if antinode_coordinates.0 >= 0 && antinode_coordinates.0 < rows && antinode_coordinates.1 >= 0 && antinode_coordinates.1 < cols {
+                        if antinode_coordinates.0 >= 0
+                            && antinode_coordinates.0 < rows
+                            && antinode_coordinates.1 >= 0
+                            && antinode_coordinates.1 < cols
+                        {
                             antinodes_coordinates.insert(antinode_coordinates);
                         }
                     }
@@ -738,6 +746,47 @@ fn day_9(filename: &str) {
     println!("Result part 2: {result_2}");
 }
 
+fn day_11(filename: &str) {
+    let content = fs::read_to_string(filename).expect("Unable to read file");
+
+    let mut stone_sequence: Vec<String> = Vec::new();
+    let blinks = 25;
+
+    for stone in content.split_whitespace() {
+        stone_sequence.push(stone.to_string());
+    }
+    let mut cur_stone_sequence = stone_sequence.clone();
+    println!("Initial sequence: {:?}", cur_stone_sequence);
+
+    for i in 0..blinks {
+        println!("Blink: {}", i+1);
+        let mut new_stone_sequence: Vec<String> = Vec::new();
+
+        for stone in &cur_stone_sequence {
+            let number = stone.parse::<u64>().unwrap();
+            let number_len = stone.len();
+            if number == 0 {
+                new_stone_sequence.push("1".to_string());
+            } else if number_len % 2 == 0 {
+                let slice = number_len / 2;
+                let number_1 = stone[..slice].parse::<u64>().unwrap();
+                let number_2 = stone[slice..].parse::<u64>().unwrap();
+                new_stone_sequence.push(number_1.to_string());
+                new_stone_sequence.push(number_2.to_string());
+            } else {
+                new_stone_sequence.push((number * 2024).to_string());
+            }
+        }
+        // println!("New sequence: {:?}", new_stone_sequence);
+        cur_stone_sequence = new_stone_sequence.clone();
+    }
+
+    let result = cur_stone_sequence.len();
+
+    println!("Day 11");
+    println!("Result part 1/2: {result}");
+}
+
 fn main() -> io::Result<()> {
     // let content = read_file("data/day_2_input.txt");
     // day_1(&content);
@@ -748,6 +797,8 @@ fn main() -> io::Result<()> {
     // day_6("data/day_6_input.txt");
     // day_7("data/day_7_input.txt");
     // day_8("data/day_8_input.txt");
-    day_9("data/day_9_input.txt");
+    // day_9("data/day_9_input.txt");
+    // day_10("data/day_10_input.txt"); -> skip did in python, had to do in rust
+    day_11("data/day_11_input.txt");
     Ok(())
 }
